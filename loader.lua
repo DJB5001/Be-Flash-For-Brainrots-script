@@ -4,44 +4,13 @@
 
 local GAME_NAME = "Be Flash For Brainrots"
 local VERSION   = "1.0.0"
-local REPO_BASE = "https://raw.githubusercontent.com/DJB5001/DEIN-REPO/main/"
-
-local ALLOWED_GAME_IDS = {
-    136066387156306
-}
-
--- ================================================================
--- GAME CHECK
--- ================================================================
-local currentGameId = game.PlaceId
-local isAllowed     = false
-
-for _, id in ipairs(ALLOWED_GAME_IDS) do
-    if currentGameId == id then
-        isAllowed = true
-        break
-    end
-end
-
-if not isAllowed then
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title    = "BF HUB - Wrong Game",
-            Text     = "This script is for Be Flash For Brainrots only!\nYour Game ID: " .. tostring(currentGameId),
-            Duration = 10,
-        })
-    end)
-    error("[BF HUB] Wrong game! This script is for Be Flash For Brainrots only.")
-    return
-end
-
-print("[BF HUB] Game ID verified: " .. GAME_NAME .. " (" .. tostring(currentGameId) .. ")")
+local REPO_BASE = "https://raw.githubusercontent.com/DJB5001/Be-Flash-For-Brainrots-script/main/"
 
 -- ================================================================
 -- CONFIG (Key System)
 -- ================================================================
 local Config = {
-    api      = "DEINE-API-UUID-HIER",  -- <-- Ersetzen mit deiner Junkie API UUID
+    api      = "DEINE-API-UUID-HIER",  -- <-- Replace with your Junkie API UUID
     provider = "Keys",
     service  = "BeFlash_BFHUB",
 }
@@ -229,10 +198,10 @@ local function onKeyVerified()
     print("[BF HUB] Loading tabs...")
 
     local tabs = {
-        { file = "bf_main.lua",            label = "Home"     },
-        { file = "bf_tab_ingame.lua",      label = "Ingame"   },
-        { file = "bf_tab_minigame.lua",    label = "Minigame" },
-        { file = "bf_tab_misc.lua",        label = "Misc"     },
+        { file = "bf_main.lua",         label = "Home"     },
+        { file = "bf_tab_ingame.lua",   label = "Ingame"   },
+        { file = "bf_tab_minigame.lua", label = "Minigame" },
+        { file = "bf_tab_misc.lua",     label = "Misc"     },
     }
 
     for _, entry in ipairs(tabs) do
