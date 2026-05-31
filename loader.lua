@@ -10,9 +10,9 @@ local REPO_BASE = "https://raw.githubusercontent.com/DJB5001/Be-Flash-For-Brainr
 -- CONFIG (Key System)
 -- ================================================================
 local Config = {
-    api      = "DEINE-API-UUID-HIER",  -- <-- Replace with your Junkie API UUID
+    api      = "ef8c4422-f7d4-4b3c-ab4e-c3363317dba9",  -- <-- Replace with your Junkie API UUID
     provider = "Keys",
-    service  = "BeFlash_BFHUB",
+    service  = "RaiseAnimal_DJHUB",
 }
 
 -- ================================================================
