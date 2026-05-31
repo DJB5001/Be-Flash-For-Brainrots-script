@@ -128,28 +128,52 @@ return function(Window, Rayfield, Utils)
             return false
         end
 
+        log("Attempting to press ChargeButton for " .. holdTime .. "s...")
+        log("Button class: " .. btn.ClassName)
+
         local pos = btn.AbsolutePosition + btn.AbsoluteSize / 2
-        local vim = game:GetService("VirtualInputManager")
-        log("ChargeButton position: " .. tostring(pos))
-        log("Pressing ChargeButton for " .. holdTime .. "s...")
+        log("Button AbsolutePosition: " .. tostring(btn.AbsolutePosition))
+        log("Button AbsoluteSize: " .. tostring(btn.AbsoluteSize))
+        log("Click position: " .. tostring(pos))
 
-        -- Mouse Down
-        local okDown = pcall(function()
-            vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
+        -- Methode 1: fireSignal / firesignal (Synapse / Executor)
+        local method1 = pcall(function()
+            firesignal(btn.MouseButton1Down)
         end)
-        log("MouseDown: " .. (okDown and "✅ OK" or "❌ Failed"))
+        log("Method 1 (firesignal MouseButton1Down): " .. (method1 and "✅ OK" or "❌ Failed"))
 
-        -- Gedrückt halten
+        -- Methode 2: fireclickdetector Fallback
+        local method2 = false
+        if not method1 then
+            method2 = pcall(function()
+                local cd = btn:FindFirstChildOfClass("ClickDetector")
+                if cd then fireclickdetector(cd) end
+            end)
+            log("Method 2 (fireclickdetector): " .. (method2 and "✅ OK" or "❌ N/A"))
+        end
+
+        -- Methode 3: VirtualInputManager mit echten Screen-Koordinaten
+        local method3 = false
+        if not method1 and not method2 then
+            method3 = pcall(function()
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
+            end)
+            log("Method 3 (VirtualInputManager MouseDown): " .. (method3 and "✅ OK" or "❌ Failed"))
+        end
+
+        -- Halten
         task.wait(holdTime)
 
-        -- Mouse Up
-        local okUp = pcall(function()
+        -- Mouse Up — alle Methoden
+        pcall(function() firesignal(btn.MouseButton1Up) end)
+        pcall(function()
+            local vim = game:GetService("VirtualInputManager")
             vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
         end)
-        log("MouseUp: " .. (okUp and "✅ OK" or "❌ Failed"))
 
-        log("Hold complete (" .. holdTime .. "s)")
-        return true
+        log("Hold released after " .. holdTime .. "s")
+        return method1 or method2 or method3
     end
 
     -- ================================================================
