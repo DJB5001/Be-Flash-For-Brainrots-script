@@ -1,12 +1,17 @@
 -- bf_tab_minigame.lua
 return function(Window, Rayfield, Utils)
-    local Players    = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
+    local Players           = game:GetService("Players")
+    local RunService        = game:GetService("RunService")
+    local LocalPlayer       = Players.LocalPlayer
 
     local MinigameTab = Window:CreateTab("Minigame", nil)
 
-    local function log(msg)  print("[DJ HUB | Minigame] " .. tostring(msg)) end
-    local function warn2(msg) warn("[DJ HUB | Minigame] ⚠ " .. tostring(msg)) end
+    local function log(msg)
+        print("[DJ HUB | Minigame] " .. tostring(msg))
+    end
+    local function warn2(msg)
+        warn("[DJ HUB | Minigame] ⚠ " .. tostring(msg))
+    end
 
     -- ================================================================
     -- CHARGEZONE
@@ -14,7 +19,7 @@ return function(Window, Rayfield, Utils)
     local chargeZoneCache = nil
     local function findChargeZone()
         if chargeZoneCache and chargeZoneCache.Parent then return chargeZoneCache end
-        log("Searching ChargeZone...")
+        log("Searching for ChargeZone...")
         local plot = workspace:FindFirstChild("Plot")
         if plot then
             local czg = plot:FindFirstChild("ChargeZoneGroup")
@@ -39,11 +44,18 @@ return function(Window, Rayfield, Utils)
         if cz:IsA("BasePart") then cf = cz.CFrame
         elseif cz:IsA("Model") then
             if cz.PrimaryPart then cf = cz.PrimaryPart.CFrame
-            else local ok, p = pcall(function() return cz:GetPivot() end) if ok then cf = p end end
+            else
+                local ok, piv = pcall(function() return cz:GetPivot() end)
+                if ok then cf = piv
+                else
+                    local p = cz:FindFirstChildWhichIsA("BasePart", true)
+                    if p then cf = p.CFrame end
+                end
+            end
         end
-        if not cf then warn2("No CFrame from ChargeZone") return false end
+        if not cf then warn2("Could not get CFrame") return false end
         hrp.CFrame = cf + Vector3.new(0, 4, 0)
-        log("Teleported to " .. tostring(cf.Position))
+        log("Teleported to: " .. tostring(cf.Position))
         return true
     end
 
@@ -61,7 +73,7 @@ return function(Window, Rayfield, Utils)
                 :WaitForChild("ChargeButton", 10)
         end)
         if ok and btn then
-            log("Found: " .. btn:GetFullName() .. " [" .. btn.ClassName .. "]")
+            log("Found: " .. btn:GetFullName())
             chargeButtonCache = btn
             return btn
         end
@@ -79,85 +91,65 @@ return function(Window, Rayfield, Utils)
         local btn = findChargeButton()
         if not btn then warn2("Cannot hold — not found") return false end
 
-        log("Button: " .. btn:GetFullName() .. " | " .. btn.ClassName)
+        log("Holding ChargeButton for " .. holdTime .. "s...")
         log("Visible: " .. tostring(btn.Visible))
 
-        -- Methode 1: getconnections + :Fire() — zuverlässigste Methode
-        local m1down = pcall(function()
-            local conns = getconnections(btn.MouseButton1Down)
-            log("MouseButton1Down connections: " .. #conns)
-            for _, c in ipairs(conns) do c:Fire() end
-        end)
-        log("M1 getconnections MouseButton1Down: " .. (m1down and "✅" or "❌"))
-
-        -- Methode 2: firesignal
-        local m2 = pcall(function() firesignal(btn.MouseButton1Down) end)
-        log("M2 firesignal MouseButton1Down: " .. (m2 and "✅" or "❌"))
-
-        -- Methode 3: InputBegan via firesignal
-        local m3 = pcall(function()
-            local inp = Instance.new("InputObject")
-            inp.UserInputType  = Enum.UserInputType.MouseButton1
-            inp.UserInputState = Enum.UserInputState.Begin
-            firesignal(btn.InputBegan, inp, false)
-        end)
-        log("M3 firesignal InputBegan: " .. (m3 and "✅" or "❌"))
-
-        -- Methode 4: UIS InputBegan
-        local m4 = pcall(function()
-            local pos = btn.AbsolutePosition + btn.AbsoluteSize / 2
-            local inp = Instance.new("InputObject")
-            inp.UserInputType  = Enum.UserInputType.MouseButton1
-            inp.UserInputState = Enum.UserInputState.Begin
-            inp.Position       = Vector3.new(pos.X, pos.Y, 0)
-            firesignal(game:GetService("UserInputService").InputBegan, inp, false)
-        end)
-        log("M4 UIS.InputBegan: " .. (m4 and "✅" or "❌"))
+        -- Das Spiel nutzt InputBegan — wir feuern die Connections direkt
+        local ok1, conns1 = pcall(function() return getconnections(btn.InputBegan) end)
+        if ok1 and conns1 then
+            log("InputBegan connections: " .. #conns1)
+            -- Fake InputObject bauen
+            local fakeInput = {
+                UserInputType  = Enum.UserInputType.MouseButton1,
+                UserInputState = Enum.UserInputState.Begin,
+                KeyCode        = Enum.KeyCode.Unknown,
+                Position       = Vector3.new(
+                    btn.AbsolutePosition.X + btn.AbsoluteSize.X / 2,
+                    btn.AbsolutePosition.Y + btn.AbsoluteSize.Y / 2,
+                    0
+                ),
+                Delta = Vector3.new(0, 0, 0),
+            }
+            for _, c in ipairs(conns1) do
+                pcall(function() c:Fire(fakeInput, false) end)
+            end
+            log("InputBegan connections fired ✅")
+        else
+            warn2("getconnections InputBegan failed")
+        end
 
         -- Halten
-        log("Holding for " .. holdTime .. "s...")
         task.wait(holdTime)
 
-        -- Release alle Methoden
+        -- InputEnded feuern
+        local ok2, conns2 = pcall(function() return getconnections(btn.InputEnded) end)
+        if ok2 and conns2 then
+            local fakeEnd = {
+                UserInputType  = Enum.UserInputType.MouseButton1,
+                UserInputState = Enum.UserInputState.End,
+                KeyCode        = Enum.KeyCode.Unknown,
+                Position       = Vector3.new(
+                    btn.AbsolutePosition.X + btn.AbsoluteSize.X / 2,
+                    btn.AbsolutePosition.Y + btn.AbsoluteSize.Y / 2,
+                    0
+                ),
+                Delta = Vector3.new(0, 0, 0),
+            }
+            log("InputEnded connections: " .. #conns2)
+            for _, c in ipairs(conns2) do
+                pcall(function() c:Fire(fakeEnd, false) end)
+            end
+            log("InputEnded connections fired ✅")
+        end
+
+        -- Fallback: auch MouseButton1Down/Up Connections feuern
         pcall(function()
-            local conns = getconnections(btn.MouseButton1Up)
-            for _, c in ipairs(conns) do c:Fire() end
-        end)
-        pcall(function() firesignal(btn.MouseButton1Up) end)
-        pcall(function()
-            local inp = Instance.new("InputObject")
-            inp.UserInputType  = Enum.UserInputType.MouseButton1
-            inp.UserInputState = Enum.UserInputState.End
-            firesignal(btn.InputEnded, inp, false)
+            local c = getconnections(btn.MouseButton1Down)
+            for _, conn in ipairs(c) do pcall(function() conn:Fire() end) end
         end)
 
         log("Released after " .. holdTime .. "s")
         return true
-    end
-
-    -- ================================================================
-    -- DEBUG BUTTON INFO
-    -- ================================================================
-    local function debugButtonInfo()
-        local btn = findChargeButton()
-        if not btn then return end
-        log("=== ChargeButton Debug ===")
-        log("Class:    " .. btn.ClassName)
-        log("Path:     " .. btn:GetFullName())
-        log("Visible:  " .. tostring(btn.Visible))
-        log("AbsPos:   " .. tostring(btn.AbsolutePosition))
-        log("AbsSize:  " .. tostring(btn.AbsoluteSize))
-        log("Children:")
-        for _, c in pairs(btn:GetChildren()) do
-            log("  " .. c.Name .. " [" .. c.ClassName .. "]")
-        end
-        local ok1, c1 = pcall(function() return getconnections(btn.MouseButton1Down) end)
-        if ok1 then log("MouseButton1Down connections: " .. #c1)
-        else log("getconnections not supported") end
-        local ok2, c2 = pcall(function() return getconnections(btn.MouseButton1Up) end)
-        if ok2 then log("MouseButton1Up connections: " .. #c2) end
-        local ok3, c3 = pcall(function() return getconnections(btn.InputBegan) end)
-        if ok3 then log("InputBegan connections: " .. #c3) end
     end
 
     -- ================================================================
@@ -166,35 +158,44 @@ return function(Window, Rayfield, Utils)
     local autoChargeEnabled = false
 
     local function runChargeLoop()
-        log("=== Loop started ===")
-        local cycle = 0
-        while autoChargeEnabled do
-            cycle += 1
-            log("── Cycle #" .. cycle .. " ──")
+        log("=== Auto Charge loop started ===")
+        local cycleCount = 0
 
-            log("Step 1: TP to ChargeZone")
-            if not tpToChargeZone() then
-                warn2("TP failed — retry in 2s")
+        while autoChargeEnabled do
+            cycleCount += 1
+            log("── Cycle #" .. cycleCount .. " ──")
+
+            -- 1) TP zur ChargeZone
+            log("Step 1: Teleporting to ChargeZone...")
+            local tpOk = tpToChargeZone()
+            if not tpOk then
+                warn2("Teleport failed — retrying in 2s")
                 task.wait(2)
                 continue
             end
 
-            log("Step 2: Wait 1s")
+            -- 2) 1s warten
+            log("Step 2: Waiting 1s...")
             task.wait(1)
             if not autoChargeEnabled then break end
 
-            log("Step 3: Hold ChargeButton 3s")
+            -- 3) ChargeButton 3s halten
+            log("Step 3: Holding ChargeButton for 3s...")
             holdChargeButton(3)
             if not autoChargeEnabled then break end
 
-            log("Cycle #" .. cycle .. " done — waiting 20s...")
+            log("Cycle #" .. cycleCount .. " complete!")
+
+            -- 4) 20s warten
+            log("Step 4: Waiting 20s for next cycle...")
             for i = 20, 1, -1 do
                 if not autoChargeEnabled then break end
-                if i % 5 == 0 then log("Next cycle in " .. i .. "s...") end
+                log("Next cycle in " .. i .. "s...")
                 task.wait(1)
             end
         end
-        log("=== Loop stopped after " .. cycle .. " cycle(s) ===")
+
+        log("=== Auto Charge loop stopped after " .. cycleCount .. " cycle(s) ===")
     end
 
     -- ================================================================
@@ -207,7 +208,8 @@ return function(Window, Rayfield, Utils)
         Content = "1. Teleports to ChargeZone\n"
                 .."2. Waits 1 second\n"
                 .."3. Holds ChargeButton for 3 seconds\n"
-                .."4. Waits 20 seconds → repeats\n"
+                .."4. Waits 20 seconds\n"
+                .."5. Repeats automatically\n"
                 .."Open F9 for detailed debug logs."
     })
 
@@ -221,17 +223,16 @@ return function(Window, Rayfield, Utils)
                 log("=== Auto Charge ENABLED ===")
                 chargeZoneCache   = nil
                 chargeButtonCache = nil
-                local czOk  = findChargeZone()   ~= nil
-                local btnOk = findChargeButton()  ~= nil
-                debugButtonInfo()
-                log("ChargeZone:   " .. (czOk  and "✅" or "❌"))
-                log("ChargeButton: " .. (btnOk and "✅" or "❌"))
+                local czOk  = findChargeZone()  ~= nil
+                local btnOk = findChargeButton() ~= nil
+                log("ChargeZone:   " .. (czOk  and "✅ Found" or "❌ Not found"))
+                log("ChargeButton: " .. (btnOk and "✅ Found" or "❌ Not found"))
                 Rayfield:Notify({
                     Title   = "Auto Charge",
                     Content = (czOk and btnOk)
-                        and "Started! Check F9 for logs."
-                        or  "⚠ Issue detected — check F9!",
-                    Duration = 4,
+                        and "Started! Check F9 for debug logs."
+                        or  "⚠ Setup issue — check F9!",
+                    Duration = 3,
                 })
                 task.spawn(runChargeLoop)
             else
@@ -241,31 +242,66 @@ return function(Window, Rayfield, Utils)
         end,
     })
 
+    -- ================================================================
+    -- DEBUG
+    -- ================================================================
     MinigameTab:CreateSection("Debug")
 
     MinigameTab:CreateButton({
-        Name = "Debug: Print Button Info (F9)",
+        Name     = "Test: Find ChargeZone",
+        Callback = function()
+            chargeZoneCache = nil
+            local cz = findChargeZone()
+            Rayfield:Notify({
+                Title   = "Debug",
+                Content = cz and ("✅ " .. cz:GetFullName()) or "❌ Not found — check F9",
+                Duration = 4,
+            })
+        end
+    })
+
+    MinigameTab:CreateButton({
+        Name     = "Test: Find ChargeButton",
         Callback = function()
             chargeButtonCache = nil
-            debugButtonInfo()
-            Rayfield:Notify({ Title = "Debug", Content = "Check F9 for button info.", Duration = 3 })
+            local btn = findChargeButton()
+            if btn then
+                -- Connection-Info loggen
+                local ok, c = pcall(function() return getconnections(btn.InputBegan) end)
+                log("InputBegan connections: " .. (ok and #c or "N/A"))
+                local ok2, c2 = pcall(function() return getconnections(btn.MouseButton1Down) end)
+                log("MouseButton1Down connections: " .. (ok2 and #c2 or "N/A"))
+            end
+            Rayfield:Notify({
+                Title   = "Debug",
+                Content = btn and ("✅ " .. btn:GetFullName()) or "❌ Not found — check F9",
+                Duration = 4,
+            })
         end
     })
 
     MinigameTab:CreateButton({
-        Name = "Test: Teleport to ChargeZone",
+        Name     = "Test: Teleport to ChargeZone",
         Callback = function()
             local ok = tpToChargeZone()
-            Rayfield:Notify({ Title = "Debug", Content = ok and "✅ Teleported!" or "❌ Failed — check F9", Duration = 3 })
+            Rayfield:Notify({
+                Title   = "Debug",
+                Content = ok and "✅ Teleported!" or "❌ Failed — check F9",
+                Duration = 3,
+            })
         end
     })
 
     MinigameTab:CreateButton({
-        Name = "Test: Hold ChargeButton (3s)",
+        Name     = "Test: Hold ChargeButton (3s)",
         Callback = function()
-            log("Manual hold test")
-            holdChargeButton(3)
-            Rayfield:Notify({ Title = "Debug", Content = "Done — check F9 for which method worked.", Duration = 3 })
+            log("Manual test: Hold ChargeButton 3s")
+            local ok = holdChargeButton(3)
+            Rayfield:Notify({
+                Title   = "Debug",
+                Content = ok and "✅ Hold complete!" or "❌ Failed — check F9",
+                Duration = 3,
+            })
         end
     })
 
