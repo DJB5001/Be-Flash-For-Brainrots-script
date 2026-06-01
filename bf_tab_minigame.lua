@@ -232,30 +232,17 @@ return function(Window, Rayfield, Utils)
                 if not obj:IsA("ImageButton") then continue end
                 if not obj.Visible then continue end
                 if obj.ImageTransparency >= 0.5 then continue end
-                local sizeX = obj.AbsoluteSize.X
-                local sizeY = obj.AbsoluteSize.Y
+                local sizeX = math.floor(obj.AbsoluteSize.X)
+                local sizeY = math.floor(obj.AbsoluteSize.Y)
                 if sizeX < 50 or sizeY < 50 then continue end
+                -- Nur Paradox oder QTE im Pfad — verhindert Gift GUI
                 local fullName = obj:GetFullName()
-                if not (fullName:find("QTE") or fullName:find("Paradox")
-                     or fullName:find("Bifrost") or fullName:find("Mutation")) then continue end
-
-                -- Cooldown pro Button: max 1x pro 0.5s klicken
+                if not (fullName:find("Paradox") or fullName:find("QTE")) then continue end
                 local now = tick()
                 if lastQTEClick[obj] and now - lastQTEClick[obj] < 0.5 then continue end
                 lastQTEClick[obj] = now
-
                 local center = obj.AbsolutePosition + obj.AbsoluteSize / 2
-
-                pcall(function()
-                    local conns = getconnections(obj.MouseButton1Down)
-                    for _, c in ipairs(conns) do c:Fire(center.X, center.Y) end
-                end)
-                pcall(function()
-                    local conns = getconnections(obj.MouseButton1Click)
-                    for _, c in ipairs(conns) do c:Fire() end
-                end)
-                pcall(function() firesignal(obj.MouseButton1Down, center.X, center.Y) end)
-                pcall(function() firesignal(obj.MouseButton1Click) end)
+                -- VirtualInputManager exakt wie das funktionierende Script
                 pcall(function()
                     if isMobile then
                         vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game)
