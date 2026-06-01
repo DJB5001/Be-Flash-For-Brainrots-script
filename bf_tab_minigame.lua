@@ -245,54 +245,15 @@ return function(Window, Rayfield, Utils)
                 print("[QTE CLICK] " .. fullName)
                 -- VirtualInputManager exakt wie das funktionierende Script
                 pcall(function()
-                    if isMobile then
-                        local ib_ok, ib_conns = pcall(function() return getconnections(obj.InputBegan) end)
-                        local ie_ok, ie_conns = pcall(function() return getconnections(obj.InputEnded) end)
-                        local mb_ok, mb_conns = pcall(function() return getconnections(obj.MouseButton1Down) end)
-                        local mc_ok, mc_conns = pcall(function() return getconnections(obj.MouseButton1Click) end)
-                        print("[MOBILE CLICK DEBUG] " .. obj:GetFullName())
-                        print("  InputBegan conns: " .. (ib_ok and #ib_conns or "err"))
-                        print("  InputEnded conns: " .. (ie_ok and #ie_conns or "err"))
-                        print("  MB1Down conns:    " .. (mb_ok and #mb_conns or "err"))
-                        print("  MB1Click conns:   " .. (mc_ok and #mc_conns or "err"))
-                        print("  center: " .. math.floor(center.X) .. "," .. math.floor(center.Y))
-                        -- M1: InputBegan
-                        if ib_ok and ib_conns then
-                            for _, c in ipairs(ib_conns) do
-                                pcall(function() c:Fire({UserInputType=Enum.UserInputType.Touch,UserInputState=Enum.UserInputState.Begin,KeyCode=Enum.KeyCode.Unknown,Position=Vector3.new(center.X,center.Y,0),Delta=Vector3.new(0,0,0)},false) end)
-                            end
-                        end
-                        -- M2: MouseButton1Down
-                        if mb_ok and mb_conns then
-                            for _, c in ipairs(mb_conns) do
-                                pcall(function() c:Fire(center.X, center.Y) end)
-                            end
-                        end
-                        -- M3: MouseButton1Click
-                        if mc_ok and mc_conns then
-                            for _, c in ipairs(mc_conns) do
-                                pcall(function() c:Fire() end)
-                            end
-                        end
-                        -- M4: firesignal
-                        pcall(function() firesignal(obj.MouseButton1Down, center.X, center.Y) end)
-                        pcall(function() firesignal(obj.MouseButton1Click) end)
-                        -- M5: SendTouchEvent
-                        pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game) end)
-                        task.wait(0.05)
-                        -- Release
-                        if ie_ok and ie_conns then
-                            for _, c in ipairs(ie_conns) do
-                                pcall(function() c:Fire({UserInputType=Enum.UserInputType.Touch,UserInputState=Enum.UserInputState.End,KeyCode=Enum.KeyCode.Unknown,Position=Vector3.new(center.X,center.Y,0),Delta=Vector3.new(0,0,0)},false) end)
-                            end
-                        end
-                        pcall(function() firesignal(obj.MouseButton1Up, center.X, center.Y) end)
-                        pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game) end)
-                    else
-                        vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0)
-                        task.wait(0.05)
-                        vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0)
-                    end
+                    -- Alle Plattformen: direkte Screen-Position klicken
+                    print("[CLICK] " .. obj:GetFullName() .. " @ " .. math.floor(center.X) .. "," .. math.floor(center.Y))
+                    pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0) end)
+                    task.wait(0.05)
+                    pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0) end)
+                    -- Touch (iPad)
+                    pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game) end)
+                    task.wait(0.05)
+                    pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game) end)
                 end)
             end
         end)
@@ -612,43 +573,14 @@ return function(Window, Rayfield, Utils)
                         -- Alle Klick-Methoden wie QTE
                         print("[2x SPEED CLICK] " .. fullName)
                         pcall(function()
-                            if isMobile then
-                                local ib_ok, ib_conns = pcall(function() return getconnections(obj.InputBegan) end)
-                                local mb_ok, mb_conns = pcall(function() return getconnections(obj.MouseButton1Down) end)
-                                local mc_ok, mc_conns = pcall(function() return getconnections(obj.MouseButton1Click) end)
-                                print("[MOBILE SPEED DEBUG] " .. obj:GetFullName())
-                                print("  InputBegan: " .. (ib_ok and #ib_conns or "err"))
-                                print("  MB1Down:    " .. (mb_ok and #mb_conns or "err"))
-                                print("  MB1Click:   " .. (mc_ok and #mc_conns or "err"))
-                                if ib_ok and ib_conns then
-                                    for _, c in ipairs(ib_conns) do
-                                        pcall(function() c:Fire({UserInputType=Enum.UserInputType.Touch,UserInputState=Enum.UserInputState.Begin,KeyCode=Enum.KeyCode.Unknown,Position=Vector3.new(center.X,center.Y,0),Delta=Vector3.new(0,0,0)},false) end)
-                                    end
-                                end
-                                if mb_ok and mb_conns then
-                                    for _, c in ipairs(mb_conns) do pcall(function() c:Fire(center.X, center.Y) end) end
-                                end
-                                if mc_ok and mc_conns then
-                                    for _, c in ipairs(mc_conns) do pcall(function() c:Fire() end) end
-                                end
-                                pcall(function() firesignal(obj.MouseButton1Down, center.X, center.Y) end)
-                                pcall(function() firesignal(obj.MouseButton1Click) end)
-                                pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game) end)
-                                task.wait(0.05)
-                                pcall(function()
-                                    local ie_ok, ie_conns = pcall(function() return getconnections(obj.InputEnded) end)
-                                    if ie_ok and ie_conns then
-                                        for _, c in ipairs(ie_conns) do
-                                            pcall(function() c:Fire({UserInputType=Enum.UserInputType.Touch,UserInputState=Enum.UserInputState.End,KeyCode=Enum.KeyCode.Unknown,Position=Vector3.new(center.X,center.Y,0),Delta=Vector3.new(0,0,0)},false) end)
-                                        end
-                                    end
-                                end)
-                                pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game) end)
-                            else
-                                vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0)
-                                task.wait(0.05)
-                                vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0)
-                            end
+                            -- Alle Plattformen: direkte Screen-Position
+                        print("[SPEED CLICK] " .. obj:GetFullName() .. " @ " .. math.floor(center.X) .. "," .. math.floor(center.Y))
+                        pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0) end)
+                        task.wait(0.05)
+                        pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0) end)
+                        pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game) end)
+                        task.wait(0.05)
+                        pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game) end)
                         end)
                     end
                 end)
