@@ -562,25 +562,16 @@ return function(Window, Rayfield, Utils)
                         local sizeY = obj.AbsoluteSize.Y
                         if sizeX < 50 or sizeY < 50 then continue end
                         local fullName = obj:GetFullName()
-                        if not (fullName:find("2x") or fullName:find("Speed")
+                        if not (fullName:find("Treadmill") or fullName:find("treadmill")
+                             or fullName:find("2x") or fullName:find("Speed")
                              or fullName:find("speed") or fullName:find("Double")
-                             or fullName:find("Gain") or fullName:find("gain")
-                             or fullName:find("Boost") or fullName:find("boost")) then continue end
+                             or fullName:find("Gain") or fullName:find("gain")) then continue end
                         local now = tick()
                         if lastSpeedClick[obj] and now - lastSpeedClick[obj] < 0.5 then continue end
                         lastSpeedClick[obj] = now
                         local center = obj.AbsolutePosition + obj.AbsoluteSize / 2
                         -- Alle Klick-Methoden wie QTE
-                        pcall(function()
-                            local conns = getconnections(obj.MouseButton1Down)
-                            for _, c in ipairs(conns) do c:Fire(center.X, center.Y) end
-                        end)
-                        pcall(function()
-                            local conns = getconnections(obj.MouseButton1Click)
-                            for _, c in ipairs(conns) do c:Fire() end
-                        end)
-                        pcall(function() firesignal(obj.MouseButton1Down, center.X, center.Y) end)
-                        pcall(function() firesignal(obj.MouseButton1Click) end)
+                        print("[2x SPEED CLICK] " .. fullName)
                         pcall(function()
                             if isMobile then
                                 vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game)
