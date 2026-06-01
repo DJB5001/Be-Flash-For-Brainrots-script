@@ -241,20 +241,18 @@ return function(Window, Rayfield, Utils)
                 local now = tick()
                 if lastQTEClick[obj] and now - lastQTEClick[obj] < 0.5 then continue end
                 lastQTEClick[obj] = now
-                local center = obj.AbsolutePosition + obj.AbsoluteSize / 2
-                print("[QTE CLICK] " .. fullName)
-                -- VirtualInputManager exakt wie das funktionierende Script
-                pcall(function()
-                    -- Alle Plattformen: direkte Screen-Position klicken
-                    print("[CLICK] " .. obj:GetFullName() .. " @ " .. math.floor(center.X) .. "," .. math.floor(center.Y))
-                    pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0) end)
-                    task.wait(0.05)
-                    pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0) end)
-                    -- Touch (iPad)
-                    pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game) end)
-                    task.wait(0.05)
-                    pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game) end)
-                end)
+                if not obj or not obj.Parent then continue end
+                local absPos  = obj.AbsolutePosition
+                local absSize = obj.AbsoluteSize
+                if not absPos or not absSize then continue end
+                local center = absPos + absSize / 2
+                print("[QTE CLICK] " .. fullName .. " @ " .. math.floor(center.X) .. "," .. math.floor(center.Y))
+                pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0) end)
+                task.wait(0.05)
+                pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0) end)
+                pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game) end)
+                task.wait(0.05)
+                pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game) end)
             end
         end)
     end
@@ -569,19 +567,18 @@ return function(Window, Rayfield, Utils)
                         local now = tick()
                         if lastSpeedClick[obj] and now - lastSpeedClick[obj] < 0.5 then continue end
                         lastSpeedClick[obj] = now
-                        local center = obj.AbsolutePosition + obj.AbsoluteSize / 2
-                        -- Alle Klick-Methoden wie QTE
-                        print("[2x SPEED CLICK] " .. fullName)
-                        pcall(function()
-                            -- Alle Plattformen: direkte Screen-Position
-                        print("[SPEED CLICK] " .. obj:GetFullName() .. " @ " .. math.floor(center.X) .. "," .. math.floor(center.Y))
+                        if not obj or not obj.Parent then continue end
+                        local absPos  = obj.AbsolutePosition
+                        local absSize = obj.AbsoluteSize
+                        if not absPos or not absSize then continue end
+                        local center = absPos + absSize / 2
+                        print("[SPEED CLICK] " .. fullName .. " @ " .. math.floor(center.X) .. "," .. math.floor(center.Y))
                         pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0) end)
                         task.wait(0.05)
                         pcall(function() vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0) end)
                         pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game) end)
                         task.wait(0.05)
                         pcall(function() vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game) end)
-                        end)
                     end
                 end)
             else
