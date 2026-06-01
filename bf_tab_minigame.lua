@@ -229,31 +229,32 @@ return function(Window, Rayfield, Utils)
             local pg = LocalPlayer:FindFirstChild("PlayerGui")
             if not pg then return end
             for _, obj in ipairs(pg:GetDescendants()) do
-                pcall(function()
+                local ok, absSize, absPos, fullName, sizeX, sizeY
+                ok = pcall(function()
                     if not obj:IsA("ImageButton") then return end
                     if not obj.Visible then return end
                     if not obj.Parent then return end
-                    local absSize = obj.AbsoluteSize
+                    absSize = obj.AbsoluteSize
                     if not absSize then return end
                     if obj.ImageTransparency >= 0.5 then return end
-                    local sizeX = math.floor(absSize.X)
-                    local sizeY = math.floor(absSize.Y)
+                    sizeX = math.floor(absSize.X)
+                    sizeY = math.floor(absSize.Y)
                     if sizeX < 50 or sizeY < 50 then return end
-                    local fullName = obj:GetFullName()
+                    fullName = obj:GetFullName()
                     if not (fullName:find("Paradox") or fullName:find("QTE")) then return end
                     local now = tick()
                     if lastQTEClick[obj] and now - lastQTEClick[obj] < 0.5 then return end
                     lastQTEClick[obj] = now
-                    local absPos = obj.AbsolutePosition
-                    if not absPos then return end
-                    local center = absPos + absSize / 2
-                    vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0)
-                    task.wait(0.05)
-                    vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0)
-                    vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game)
-                    task.wait(0.05)
-                    vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game)
+                    absPos = obj.AbsolutePosition
                 end)
+                if not ok or not absPos or not absSize then continue end
+                local cx = absPos.X + absSize.X / 2
+                local cy = absPos.Y + absSize.Y / 2
+                pcall(function() vim:SendMouseButtonEvent(cx, cy, 0, true,  game, 0) end)
+                pcall(function() vim:SendTouchEvent(0, Vector2.new(cx, cy), Enum.UserInputState.Begin, game) end)
+                task.wait(0.05)
+                pcall(function() vim:SendMouseButtonEvent(cx, cy, 0, false, game, 0) end)
+                pcall(function() vim:SendTouchEvent(0, Vector2.new(cx, cy), Enum.UserInputState.End, game) end)
             end
         end)
     end
@@ -554,15 +555,16 @@ return function(Window, Rayfield, Utils)
                     local pg = LocalPlayer:FindFirstChild("PlayerGui")
                     if not pg then return end
                     for _, obj in ipairs(pg:GetDescendants()) do
-                        pcall(function()
+                        local absSize2, absPos2
+                        local ok2 = pcall(function()
                             if not obj:IsA("ImageButton") then return end
                             if not obj.Visible then return end
                             if not obj.Parent then return end
-                            local absSize = obj.AbsoluteSize
-                            if not absSize then return end
+                            absSize2 = obj.AbsoluteSize
+                            if not absSize2 then return end
                             if obj.ImageTransparency >= 0.5 then return end
-                            local sizeX = absSize.X
-                            local sizeY = absSize.Y
+                            local sizeX = absSize2.X
+                            local sizeY = absSize2.Y
                             if sizeX < 50 or sizeY < 50 then return end
                             local fullName = obj:GetFullName()
                             if not (fullName:find("Treadmill") or fullName:find("treadmill")
@@ -572,16 +574,16 @@ return function(Window, Rayfield, Utils)
                             local now = tick()
                             if lastSpeedClick[obj] and now - lastSpeedClick[obj] < 0.5 then return end
                             lastSpeedClick[obj] = now
-                            local absPos = obj.AbsolutePosition
-                            if not absPos then return end
-                            local center = absPos + absSize / 2
-                            vim:SendMouseButtonEvent(center.X, center.Y, 0, true,  game, 0)
-                            task.wait(0.05)
-                            vim:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0)
-                            vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.Begin, game)
-                            task.wait(0.05)
-                            vim:SendTouchEvent(0, Vector2.new(center.X, center.Y), Enum.UserInputState.End, game)
+                            absPos2 = obj.AbsolutePosition
                         end)
+                        if not ok2 or not absPos2 or not absSize2 then continue end
+                        local cx = absPos2.X + absSize2.X / 2
+                        local cy = absPos2.Y + absSize2.Y / 2
+                        pcall(function() vim:SendMouseButtonEvent(cx, cy, 0, true,  game, 0) end)
+                        pcall(function() vim:SendTouchEvent(0, Vector2.new(cx, cy), Enum.UserInputState.Begin, game) end)
+                        task.wait(0.05)
+                        pcall(function() vim:SendMouseButtonEvent(cx, cy, 0, false, game, 0) end)
+                        pcall(function() vim:SendTouchEvent(0, Vector2.new(cx, cy), Enum.UserInputState.End, game) end)
                     end
                 end)
             else
