@@ -242,6 +242,7 @@ return function(Window, Rayfield, Utils)
                 if lastQTEClick[obj] and now - lastQTEClick[obj] < 0.5 then continue end
                 lastQTEClick[obj] = now
                 local center = obj.AbsolutePosition + obj.AbsoluteSize / 2
+                print("[QTE CLICK] " .. fullName)
                 -- VirtualInputManager exakt wie das funktionierende Script
                 pcall(function()
                     if isMobile then
